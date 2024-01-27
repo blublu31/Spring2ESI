@@ -1,7 +1,9 @@
 package fr.limayrac.Projet.repository.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Description;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.webflow.config.AbstractFlowConfiguration;
 import org.springframework.webflow.definition.registry.FlowDefinitionRegistry;
@@ -20,11 +22,13 @@ import java.util.Collections;
 
 @Configuration
 public class CustomWebFlowConfig extends AbstractFlowConfiguration {
+    @Autowired
+    private LocalValidatorFactoryBean LocalValidatorFacotryBean;
 
     @Bean
     public FlowDefinitionRegistry flowRegistry() {
         return getFlowDefinitionRegistryBuilder()
-                .setBasePath("classpath:custom-flows")
+                .setBasePath("classpath:flows")
                 .addFlowLocationPattern("/**/*-flow.xml")
                 .setFlowBuilderServices(flowBuilderServices())
                 .build();
@@ -34,7 +38,7 @@ public class CustomWebFlowConfig extends AbstractFlowConfiguration {
     public FlowBuilderServices flowBuilderServices() {
         return getFlowBuilderServicesBuilder()
                 .setViewFactoryCreator(viewFactoryCreator())
-                .setValidator(localValidatorFactoryBean())
+                .setValidator(LocalValidatorFacotryBean)
                 .build();
     }
 
@@ -47,10 +51,10 @@ public class CustomWebFlowConfig extends AbstractFlowConfiguration {
     }
 
     @Bean
-    public FlowExecutor flowExecutor() {
-        return getFlowExecutorBuilder(flowRegistry())
-                .addFlowExecutionListener((FlowExecutionListener) new CustomFlowExecutionListener(), "*")
-                .build();
+    public FlowExecutor flowExecutor(){
+        return getFlowExecutorBuilder (flowRegistry())
+            .addFlowExecutionListener((FlowExecutionListener) new CustomFlowExecutionListener(), "*")
+            .build();
     }
 
     @Bean
@@ -69,9 +73,10 @@ public class CustomWebFlowConfig extends AbstractFlowConfiguration {
     }
 
     @Bean
+    @Description("Thymeleaf template resolver serving HTML")
     public ClassLoaderTemplateResolver templateResolver() {
         ClassLoaderTemplateResolver templateResolver = new ClassLoaderTemplateResolver();
-        templateResolver.setPrefix("custom-templates/");
+        templateResolver.setPrefix("templates/");
         templateResolver.setCacheable(false);
         templateResolver.setSuffix(".html");
         templateResolver.setTemplateMode("HTML");
@@ -93,10 +98,5 @@ public class CustomWebFlowConfig extends AbstractFlowConfiguration {
         handlerAdapter.setFlowExecutor(this.flowExecutor());
         handlerAdapter.setSaveOutputToFlashScopeOnRedirect(true);
         return handlerAdapter;
-    }
-
-    @Bean
-    public LocalValidatorFactoryBean localValidatorFactoryBean() {
-        return new LocalValidatorFactoryBean();
     }
 }
